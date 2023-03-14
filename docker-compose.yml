@@ -9,6 +9,8 @@ volumes:
     name: traefik_acme
   nginx-vol:
     name: nginx_vol
+  nexus-vol:
+    name: nexus_vol
 
 services:
   traefik:
@@ -89,3 +91,16 @@ services:
       - "traefik.http.routers.nginx-secure.tls.certresolver=mycert"
       - "traefik.http.routers.nginx-secure.service=nginx-secure"
       - "traefik.http.services.nginx-secure.loadbalancer.server.port=80"
+
+  nexus:
+    image: sonatype/nexus3:latest
+    restart: always
+    ports:
+    volumes:
+      - "nexus-vol:/sonatype-work"
+    networks:
+      - dccn-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dccn-net"
+      - "traefik.http.routers.repo.entrypoints=http"
