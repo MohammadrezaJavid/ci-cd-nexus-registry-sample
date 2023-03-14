@@ -72,31 +72,31 @@ services:
 
       - "traefik.http.services.traefik-service.loadbalancer.server.port=8080"
   
-  nginx-service:
-    image: nginx:latest
-    container_name: nginx
-    restart: unless-stopped
-    networks:
-      - dccn-net
-    volumes:
-      - nginx-vol:/usr/share/nginx/html
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=dccn-net"
+  # nginx-service:
+  #   image: nginx:latest
+  #   container_name: nginx
+  #   restart: unless-stopped
+  #   networks:
+  #     - dccn-net
+  #   volumes:
+  #     - nginx-vol:/usr/share/nginx/html
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.docker.network=dccn-net"
 
-      - "traefik.http.routers.nginx-service.entrypoints=http"
-      - "traefik.http.routers.nginx-service.rule=Host(`jlinux.ir`)"
+  #     - "traefik.http.routers.nginx-service.entrypoints=http"
+  #     - "traefik.http.routers.nginx-service.rule=Host(`jlinux.ir`)"
 
-      - "traefik.http.routers.nginx-service.middlewares=https-redirect"
-      - "traefik.http.routers.nginx-service.service=nginx-service-secure"
-      - "traefik.http.routers.nginx-service-secure.entrypoints=https"
-      - "traefik.http.routers.nginx-service-secure.rule=Host(`jlinux.ir`)"
+  #     - "traefik.http.routers.nginx-service.middlewares=https-redirect"
+  #     - "traefik.http.routers.nginx-service.service=nginx-service-secure"
+  #     - "traefik.http.routers.nginx-service-secure.entrypoints=https"
+  #     - "traefik.http.routers.nginx-service-secure.rule=Host(`jlinux.ir`)"
 
-      - "traefik.http.routers.nginx-service-secure.tls=true"
-      - "traefik.http.routers.nginx-service-secure.tls.options=default"
-      - "traefik.http.routers.nginx-service-secure.tls.certresolver=mycert"
-      - "traefik.http.routers.nginx-service-secure.service=nginx-service-secure"
-      - "traefik.http.services.nginx-service-secure.loadbalancer.server.port=80"
+  #     - "traefik.http.routers.nginx-service-secure.tls=true"
+  #     - "traefik.http.routers.nginx-service-secure.tls.options=default"
+  #     - "traefik.http.routers.nginx-service-secure.tls.certresolver=mycert"
+  #     - "traefik.http.routers.nginx-service-secure.service=nginx-service-secure"
+  #     - "traefik.http.services.nginx-service-secure.loadbalancer.server.port=80"
 
   nexus-service:
     image: sonatype/nexus3:latest
