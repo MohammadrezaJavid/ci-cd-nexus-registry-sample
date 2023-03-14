@@ -1,0 +1,91 @@
+version: '3.4'
+
+networks:
+  dccn-net:
+    name: dccn_net
+
+volumes:
+  traefik-acme:
+    name: traefik_acme
+  nginx-vol:
+    name: nginx_vol
+
+services:
+  traefik:
+    image: traefik:v2.4.8
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/acme
+      - ./traefik:/traefik
+    networks:
+      - dccn-net
+    command:
+      - "--log.level=INFO"
+      - "--log.filepath=/traefik.log"
+      - "--log.format=json"
+
+      - "--api=true"
+      - "--ping=true"
+      - "--accesslog=true"
+      - "--accesslog.bufferingsize=100"
+      - "--api.insecure=true"
+
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=dccn-net"
+
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      
+      - "--certificatesresolvers.mycert.acme.email=mohamadrezajavid9@gmail.com"
+      - "--certificatesresolvers.mycert.acme.storage=/acme/acme.json"
+      - "--certificatesresolvers.mycert.acme.tlschallenge=true"
+
+      - "--providers.file.filename=/traefik/config.yml"
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.docker.network=dccn-net"
+
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.jlinux.ir`)"
+      - "traefik.http.routers.traefik.middlewares=https-redirect"
+
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+
+      - "traefik.http.middlewares.web-auth.basicauth.users=user:$$apr1$$QpkypDvQ$$FjJgBGyX/By8agkOCUvDo."
+      
+      - "traefik.http.routers.traefik-secure.middlewares=web-auth"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.jlinux.ir`)"
+      
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.options=default"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=mycert"
+
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+  
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
+    networks:
+      - dccn-net
+    volumes:
+      - nginx-vol:/usr/share/nginx/html
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dccn-net"
+      - "traefik.http.routers.nginx.entrypoints=http"
+      - "traefik.http.routers.nginx.rule=Host(`jlinux.ir`)"
+      - "traefik.http.routers.nginx.service=nginx-secure"
+      - "traefik.http.routers.nginx.middlewares=https-redirect"
+      - "traefik.http.routers.nginx-secure.entrypoints=https"
+      - "traefik.http.routers.nginx-secure.rule=Host(`jlinux.ir`)"
+      - "traefik.http.routers.nginx-secure.tls.options=default"
+      - "traefik.http.routers.nginx-secure.tls.certresolver=mycert"
+      - "traefik.http.routers.nginx-secure.service=nginx-secure"
+      - "traefik.http.services.nginx-secure.loadbalancer.server.port=80"
