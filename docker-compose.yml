@@ -13,8 +13,9 @@ volumes:
     name: nexus_vol
 
 services:
-  traefik:
+  traefik-service:
     image: traefik:v2.4.8
+    container_name: traefik
     ports:
       - 80:80
       - 443:443
@@ -50,29 +51,30 @@ services:
       - "--providers.file.filename=/traefik/config.yml"
     labels:
       - "traefik.enable=true"
-
       - "traefik.docker.network=dccn-net"
 
-      - "traefik.http.routers.traefik.entrypoints=http"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.jlinux.ir`)"
-      - "traefik.http.routers.traefik.middlewares=https-redirect"
+      - "traefik.http.routers.traefik-service.entrypoints=http"
+      - "traefik.http.routers.traefik-service.rule=Host(`traefik.jlinux.ir`)"
 
+      - "traefik.http.routers.traefik-service.middlewares=https-redirect"
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
 
-      - "traefik.http.middlewares.web-auth.basicauth.users=user:$$apr1$$QpkypDvQ$$FjJgBGyX/By8agkOCUvDo."
+      - "traefik.http.routers.traefik-service-secure.middlewares=basic-auth-global"
+      # traefik.http.middlewares.basic-auth-global.basicauth.users: <username>:<encoded-password>
+      - "traefik.http.middlewares.basic-auth-global.basicauth.users=javid:$$apr1$$Mbb4f45W$$6Wq8.Hhi8jNrGBY.C8JRU1"
       
-      - "traefik.http.routers.traefik-secure.middlewares=web-auth"
-      - "traefik.http.routers.traefik-secure.entrypoints=https"
-      - "traefik.http.routers.traefik-secure.rule=Host(`traefik.jlinux.ir`)"
+      - "traefik.http.routers.traefik-service-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-service-secure.rule=Host(`traefik.jlinux.ir`)"
       
-      - "traefik.http.routers.traefik-secure.tls=true"
-      - "traefik.http.routers.traefik-secure.tls.options=default"
-      - "traefik.http.routers.traefik-secure.tls.certresolver=mycert"
+      - "traefik.http.routers.traefik-service-secure.tls=true"
+      - "traefik.http.routers.traefik-service-secure.tls.options=default"
+      - "traefik.http.routers.traefik-service-secure.tls.certresolver=mycert"
 
-      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.services.traefik-service.loadbalancer.server.port=8080"
   
-  nginx:
+  nginx-service:
     image: nginx:latest
+    container_name: nginx
     restart: unless-stopped
     networks:
       - dccn-net
@@ -81,21 +83,25 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=dccn-net"
-      - "traefik.http.routers.nginx.entrypoints=http"
-      - "traefik.http.routers.nginx.rule=Host(`jlinux.ir`)"
-      - "traefik.http.routers.nginx.service=nginx-secure"
-      - "traefik.http.routers.nginx.middlewares=https-redirect"
-      - "traefik.http.routers.nginx-secure.entrypoints=https"
-      - "traefik.http.routers.nginx-secure.rule=Host(`jlinux.ir`)"
-      - "traefik.http.routers.nginx-secure.tls.options=default"
-      - "traefik.http.routers.nginx-secure.tls.certresolver=mycert"
-      - "traefik.http.routers.nginx-secure.service=nginx-secure"
-      - "traefik.http.services.nginx-secure.loadbalancer.server.port=80"
 
-  nexus:
+      - "traefik.http.routers.nginx-service.entrypoints=http"
+      - "traefik.http.routers.nginx-service.rule=Host(`jlinux.ir`)"
+
+      - "traefik.http.routers.nginx-service.middlewares=https-redirect"
+      - "traefik.http.routers.nginx-service.service=nginx-service-secure"
+      - "traefik.http.routers.nginx-service-secure.entrypoints=https"
+      - "traefik.http.routers.nginx-service-secure.rule=Host(`jlinux.ir`)"
+
+      - "traefik.http.routers.nginx-service-secure.tls=true"
+      - "traefik.http.routers.nginx-service-secure.tls.options=default"
+      - "traefik.http.routers.nginx-service-secure.tls.certresolver=mycert"
+      - "traefik.http.routers.nginx-service-secure.service=nginx-service-secure"
+      - "traefik.http.services.nginx-service-secure.loadbalancer.server.port=80"
+
+  nexus-service:
     image: sonatype/nexus3:latest
+    container_name: nexus
     restart: always
-    ports:
     volumes:
       - "nexus-vol:/sonatype-work"
     networks:
@@ -103,4 +109,47 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=dccn-net"
+
       - "traefik.http.routers.repo.entrypoints=http"
+      - "traefik.http.routers.repo.rule=Host(`registry.jlinux.ir`)"
+      - "traefik.http.routers.repo.service=repo-secure"
+      - "traefik.http.routers.repo.middlewares=https-redirect"
+      - "traefik.http.routers.repo-secure.entrypoints=https"
+      - "traefik.http.routers.repo-secure.rule=Host(`registry.jlinux.ir`)"
+
+      - "traefik.http.routers.repo-secure.tls=true"
+      - "traefik.http.routers.repo-secure.tls.options=default"
+      - "traefik.http.routers.repo-secure.tls.certresolver=mycert"
+
+      - "traefik.http.routers.repo-secure.service=repo-secure"
+      - "traefik.http.services.repo-secure.loadbalancer.server.port=8081"
+
+
+      - "traefik.http.routers.nexusdocker.entrypoints=http"
+      - "traefik.http.routers.nexusdocker.rule=Host(`docker.jlinux.ir`)"
+      - "traefik.http.routers.nexusdocker.middlewares=https-redirect"
+      - "traefik.http.routers.nexusdocker-secure.entrypoints=https"
+      - "traefik.http.routers.nexusdocker.service=nexusdocker-secure"
+      - "traefik.http.routers.nexusdocker-secure.rule=Host(`docker.jlinux.ir`)"
+     
+      - "traefik.http.routers.nexusdocker-secure.tls=true"
+      - "traefik.http.routers.nexusdocker-secure.tls.options=default"
+      - "traefik.http.routers.nexusdocker-secure.tls.certresolver=mycert"
+     
+      - "traefik.http.routers.nexusdocker-secure.service=nexusdocker-secure"
+      - "traefik.http.services.nexusdocker-secure.loadbalancer.server.port=8085"
+
+
+      - "traefik.http.routers.nexusmirror.entrypoints=http"
+      - "traefik.http.routers.nexusmirror.rule=Host(`nexus.jlinux.ir`)"
+      - "traefik.http.routers.nexusmirror.middlewares=https-redirect"
+      - "traefik.http.routers.nexusmirror.service=nexusmirror-secure"
+      - "traefik.http.routers.nexusmirror-secure.entrypoints=https"
+      - "traefik.http.routers.nexusmirror-secure.rule=Host(`nexus.jlinux.ir`)"
+      
+      - "traefik.http.routers.nexusmirror-secure.tls=true"
+      - "traefik.http.routers.nexusmirror-secure.tls.options=default"
+      - "traefik.http.routers.nexusmirror-secure.tls.certresolver=mycert"
+
+      - "traefik.http.routers.nexusmirror-secure.service=nexusmirror-secure"
+      - "traefik.http.services.nexusmirror-secure.loadbalancer.server.port=8084"
