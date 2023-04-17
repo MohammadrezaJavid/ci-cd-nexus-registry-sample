@@ -14,7 +14,16 @@ services:
   traefik-service:
     image: traefik:v2.4.8
     container_name: traefik
-
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/acme
+      - ./traefik:/traefik
+    networks:
+      - default
     command:
       - "--log.level=INFO"
       - "--log.filepath=/traefik.log"
@@ -30,47 +39,37 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=dccn_net"
 
-      - "--entrypoints.http.address=:80"
-      - "--entrypoints.https.address=:443"
-      
-      - "--certificatesresolvers.mycert.acme.email=mohamadrezajavid9@gmail.com"
-      - "--certificatesresolvers.mycert.acme.storage=/acme/acme.json"
-      - "--certificatesresolvers.mycert.acme.tlschallenge=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
 
       - "--providers.file.filename=/traefik/config.yml"
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik-acme:/acme
-      - ./traefik:/traefik
-    networks:
-      - default
 
+      #- "--entrypoints.web.address=:80"
+      #- "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      #- "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      #- "--entrypoints.websecure.address=:443"   
+      
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=dccn_net"
 
-      - "traefik.http.routers.traefik-service.entrypoints=http"
-      - "traefik.http.routers.traefik-service.rule=Host(`traefik.jlinux.ir`)"
+      - "traefik.http.routers.traefik-http.entrypoints=web"
+      - "traefik.http.routers.traefik-http.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik-http.middlewares=traefik-redirect-http"
+      - "traefik.http.middlewares.traefik-redirect-http.redirectscheme.scheme=https"
+      
+      - "traefik.http.routers.traefik-https.entrypoints=websecure"
+      - "traefik.http.routers.traefik-https.rule=Host(`traefik.localhost`)"
 
-      - "traefik.http.routers.traefik-service.middlewares=https-redirect"
-      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.traefik-https.tls=true"
+      - "traefik.http.routers.traefik-https.tls.options=default"
+      - "traefik.http.routers.traefik-https.tls.certresolver=mycert"
 
       # traefik.http.middlewares.basic-auth-global.basicauth.users: <username>:<encoded-password>
-      - "traefik.http.middlewares.basic-auth-global.basicauth.users=javid:$$apr1$$Mbb4f45W$$6Wq8.Hhi8jNrGBY.C8JRU1"
-      - "traefik.http.routers.traefik-service-secure.middlewares=basic-auth-global"
+      - "traefik.http.middlewares.basic-auth-global.basicauth.users=user:$$apr1$$iBy9InM6$$vxJGTqKth.ww3Ct8WVf2e1"
+      - "traefik.http.routers.traefik-https.middlewares=basic-auth-global"
       
-      - "traefik.http.routers.traefik-service-secure.entrypoints=https"
-      - "traefik.http.routers.traefik-service-secure.rule=Host(`traefik.jlinux.ir`)"
-      
-      - "traefik.http.routers.traefik-service-secure.tls=true"
-      - "traefik.http.routers.traefik-service-secure.tls.options=default"
-      - "traefik.http.routers.traefik-service-secure.tls.certresolver=mycert"
-
-      - "traefik.http.services.traefik-service.loadbalancer.server.port=8080"
+      - "traefik.http.services.traefik-https.loadbalancer.server.port=8080"
 
   nexus-service:
     image: sonatype/nexus3:latest
@@ -83,38 +82,48 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=dccn_net"
-      - "traefik.http.routers.repo.entrypoints=http"
-      - "traefik.http.routers.repo.rule=Host(`registry.jlinux.ir`)"
-      - "traefik.http.routers.repo.service=repo-secure"
-      - "traefik.http.routers.repo.middlewares=https-redirect"
-      - "traefik.http.routers.repo-secure.entrypoints=https"
-      - "traefik.http.routers.repo-secure.rule=Host(`registry.jlinux.ir`)"
-      - "traefik.http.routers.repo-secure.tls=true"
-      - "traefik.http.routers.repo-secure.tls.options=default"
-      - "traefik.http.routers.repo-secure.tls.certresolver=mycert"
-      - "traefik.http.routers.repo-secure.service=repo-secure"
-      - "traefik.http.services.repo-secure.loadbalancer.server.port=8081"
 
-      - "traefik.http.routers.nexusdocker.entrypoints=http"
-      - "traefik.http.routers.nexusdocker.rule=Host(`docker.jlinux.ir`)"
-      - "traefik.http.routers.nexusdocker.middlewares=https-redirect"
-      - "traefik.http.routers.nexusdocker-secure.entrypoints=https"
-      - "traefik.http.routers.nexusdocker.service=nexusdocker-secure"
-      - "traefik.http.routers.nexusdocker-secure.rule=Host(`docker.jlinux.ir`)"
-      - "traefik.http.routers.nexusdocker-secure.tls=true"
-      - "traefik.http.routers.nexusdocker-secure.tls.options=default"
-      - "traefik.http.routers.nexusdocker-secure.tls.certresolver=mycert"     
-      - "traefik.http.routers.nexusdocker-secure.service=nexusdocker-secure"
-      - "traefik.http.services.nexusdocker-secure.loadbalancer.server.port=8085"
+      # UI nexus
+      - "traefik.http.routers.nexus-http.entrypoints=web"
+      - "traefik.http.routers.nexus-http.rule=Host(`registry.localhost`)"
 
-      - "traefik.http.routers.nexusmirror.entrypoints=http"
-      - "traefik.http.routers.nexusmirror.rule=Host(`nexus.jlinux.ir`)"
-      - "traefik.http.routers.nexusmirror.middlewares=https-redirect"
-      - "traefik.http.routers.nexusmirror.service=nexusmirror-secure"
-      - "traefik.http.routers.nexusmirror-secure.entrypoints=https"
-      - "traefik.http.routers.nexusmirror-secure.rule=Host(`nexus.jlinux.ir`)"
-      - "traefik.http.routers.nexusmirror-secure.tls=true"
-      - "traefik.http.routers.nexusmirror-secure.tls.options=default"
-      - "traefik.http.routers.nexusmirror-secure.tls.certresolver=mycert"
-      - "traefik.http.routers.nexusmirror-secure.service=nexusmirror-secure"
-      - "traefik.http.services.nexusmirror-secure.loadbalancer.server.port=8084"
+      - "traefik.http.routers.nexus-https.entrypoints=websecure"
+      - "traefik.http.routers.nexus-http.service=nexus-https"
+      - "traefik.http.routers.nexus-https.rule=Host(`registry.localhost`)"
+      
+      - "traefik.http.routers.nexus-https.tls=true"
+      - "traefik.http.routers.nexus-https.tls.options=default"
+      - "traefik.http.routers.nexus-https.tls.certresolver=mycert"
+
+      - "traefik.http.routers.nexus-https.service=nexus-https"
+      - "traefik.http.services.nexus-https.loadbalancer.server.port=8081"
+
+      # docker.exam.ir
+      - "traefik.http.routers.docker-http.entrypoints=web"
+      - "traefik.http.routers.docker-http.rule=Host(`docker.localhost`)"
+      
+      - "traefik.http.routers.docker-https.entrypoints=websecure"
+      - "traefik.http.routers.docker-http.service=docker-https"
+      - "traefik.http.routers.docker-https.rule=Host(`docker.localhost`)"
+
+      - "traefik.http.routers.docker-https.tls=true"
+      - "traefik.http.routers.docker-https.tls.options=default"
+      - "traefik.http.routers.docker-https.tls.certresolver=mycert"
+
+      - "traefik.http.routers.docker-https.service=docker-https"
+      - "traefik.http.services.docker-https.loadbalancer.server.port=8082"
+
+      # nexus.localhost
+      - "traefik.http.routers.mirror-http.entrypoints=web"
+      - "traefik.http.routers.mirror-http.rule=Host(`nexus.localhost`)"
+
+      - "traefik.http.routers.mirror-https.entrypoints=websecure"
+      - "traefik.http.routers.mirror-http.service=mirror-https"
+      - "traefik.http.routers.mirror-https.rule=Host(`nexus.localhost`)"
+
+      - "traefik.http.routers.mirror-https.tls=true"
+      - "traefik.http.routers.mirror-https.tls.options=default"
+      - "traefik.http.routers.mirror-https.tls.certresolver=mycert"
+
+      - "traefik.http.routers.mirror-https.service=mirror-https"
+      - "traefik.http.services.mirror-https.loadbalancer.server.port=8083"
