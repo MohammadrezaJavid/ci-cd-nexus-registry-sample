@@ -19,7 +19,9 @@ Docker proxy, [docker.localhost](https://docker.localhost/) ----> 8082
 
 Docker private registry, [private.localhost](https://private.localhost/) ----> 8083
 
-[general structure]./images/general-structure.pdf
+#
+
+The general scenario of the repo is drawn in this file: ![general structure](./images/general-structure.pdf)
 
 # Setup docker private registry
 
