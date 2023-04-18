@@ -98,7 +98,7 @@ services:
       - "traefik.http.routers.nexus-https.service=nexus-https"
       - "traefik.http.services.nexus-https.loadbalancer.server.port=8081"
 
-      # docker.exam.ir
+      # Docker hub proxy
       - "traefik.http.routers.docker-http.entrypoints=web"
       - "traefik.http.routers.docker-http.rule=Host(`docker.localhost`)"
       
@@ -113,13 +113,13 @@ services:
       - "traefik.http.routers.docker-https.service=docker-https"
       - "traefik.http.services.docker-https.loadbalancer.server.port=8082"
 
-      # nexus.localhost
+      # Docker private 
       - "traefik.http.routers.mirror-http.entrypoints=web"
-      - "traefik.http.routers.mirror-http.rule=Host(`nexus.localhost`)"
+      - "traefik.http.routers.mirror-http.rule=Host(`private.localhost`)"
 
       - "traefik.http.routers.mirror-https.entrypoints=websecure"
       - "traefik.http.routers.mirror-http.service=mirror-https"
-      - "traefik.http.routers.mirror-https.rule=Host(`nexus.localhost`)"
+      - "traefik.http.routers.mirror-https.rule=Host(`private.localhost`)"
 
       - "traefik.http.routers.mirror-https.tls=true"
       - "traefik.http.routers.mirror-https.tls.options=default"
