@@ -12,8 +12,11 @@ We implement two services, traefik and nexus, using containers.
 UI traefik, [traefik.localhost](https://traefik.localhost/) ----> port: 8080
 
 note:
+
     * username and password set to enter traefik UI:
+
         - username: `user`
+        
         - password: `password`
 
 ## Nexus
