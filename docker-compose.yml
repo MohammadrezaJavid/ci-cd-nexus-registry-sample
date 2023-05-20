@@ -6,9 +6,7 @@ networks:
 
 volumes:
   traefik-acme:
-    name: traefik_acme
   nexus-vol:
-    name: nexus_vol
 
 services:
   traefik-service:
@@ -76,7 +74,7 @@ services:
     container_name: nexus
     restart: always
     volumes:
-      - "nexus-vol:/sonatype-work"
+      - nexus-vol:/sonatype-work
     networks:
       - default
     labels:
