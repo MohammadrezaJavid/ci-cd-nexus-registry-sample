@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.9'
 
 networks:
   default:
@@ -7,6 +7,9 @@ networks:
 volumes:
   traefik-acme:
   nexus-vol:
+  gitlab-config:
+  gitlab-data:
+  gitlab-logs:
 
 services:
   traefik-service:
@@ -69,59 +72,131 @@ services:
       
       - "traefik.http.services.traefik-https.loadbalancer.server.port=8080"
 
-  nexus-service:
-    image: sonatype/nexus3:latest
-    container_name: nexus
+  gitlab-service:
+    image: 'gitlab/gitlab-ee:latest'
     restart: always
-    volumes:
-      - nexus-vol:/sonatype-work
     networks:
       - default
+    # ports:
+    #   - "22:22"
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+    #shm_size: 256m
+    #mem_limit: 3g
+    hostname: 'gitlab.localhost'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=dccn_net"
+      - "traefik.constraint-label=dccn_net"
 
-      # UI nexus
-      - "traefik.http.routers.nexus-http.entrypoints=web"
-      - "traefik.http.routers.nexus-http.rule=Host(`registry.localhost`)"
 
-      - "traefik.http.routers.nexus-https.entrypoints=websecure"
-      - "traefik.http.routers.nexus-http.service=nexus-https"
-      - "traefik.http.routers.nexus-https.rule=Host(`registry.localhost`)"
+      - "traefik.http.routers.gitlab-http.entrypoints=web"
+      - "traefik.http.routers.gitlab-http.rule=Host(`gitlab.localhost`)"
+
+      - "traefik.http.routers.gitlab-https.entrypoints=websecure"
+      - "traefik.http.routers.gitlab-http.service=gitlab-https"
+      - "traefik.http.routers.gitlab-https.rule=Host(`gitlab.localhost`)"
+    
+      # - "traefik.http.routers.gitlab-https.tls=true"
+      # - "traefik.http.routers.gitlab-https.tls.options=default"
+      # - "traefik.http.routers.gitlab-https.tls.certresolver=mycert"
+
+      - "traefik.http.routers.gitlab-https.service=gitlab-https"
+      - "traefik.http.services.gitlab-https.loadbalancer.server.port=8084"
+
+      # - traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)
+      # - traefik.tcp.routers.gitlab-ssh.entrypoints=ssh
+      # - traefik.tcp.routers.gitlab-ssh.service=gitlab-ssh-svc
+      # - traefik.tcp.services.gitlab-ssh-svc.loadbalancer.server.port=22
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+
+        # server config
+        external_url 'https://gitlab.localhost'
+        #gitlab_rails['time_zone'] = 'Asia/Tehran'
+
+        # gitlab SSH config
+        gitlab_rails['gitlab_shell_ssh_port'] = 22
+
+        # Add any other gitlab.rb configuration here, each on its own line
+
+
+  # nexus-service:
+  #   image: sonatype/nexus3:latest
+  #   container_name: nexus
+  #   restart: always
+  #   volumes:
+  #     - nexus-vol:/sonatype-work
+  #   networks:
+  #     - default
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.docker.network=dccn_net"
+
+  #     # UI nexus
+  #     - "traefik.http.routers.nexus-http.entrypoints=web"
+  #     - "traefik.http.routers.nexus-http.rule=Host(`registry.localhost`)"
+
+  #     - "traefik.http.routers.nexus-https.entrypoints=websecure"
+  #     - "traefik.http.routers.nexus-http.service=nexus-https"
+  #     - "traefik.http.routers.nexus-https.rule=Host(`registry.localhost`)"
       
-      - "traefik.http.routers.nexus-https.tls=true"
-      - "traefik.http.routers.nexus-https.tls.options=default"
-      - "traefik.http.routers.nexus-https.tls.certresolver=mycert"
+  #     - "traefik.http.routers.nexus-https.tls=true"
+  #     - "traefik.http.routers.nexus-https.tls.options=default"
+  #     - "traefik.http.routers.nexus-https.tls.certresolver=mycert"
 
-      - "traefik.http.routers.nexus-https.service=nexus-https"
-      - "traefik.http.services.nexus-https.loadbalancer.server.port=8081"
+  #     - "traefik.http.routers.nexus-https.service=nexus-https"
+  #     - "traefik.http.services.nexus-https.loadbalancer.server.port=8081"
 
-      # Docker hub proxy
-      - "traefik.http.routers.docker-http.entrypoints=web"
-      - "traefik.http.routers.docker-http.rule=Host(`docker.localhost`)"
+  #     # Docker hub proxy
+  #     - "traefik.http.routers.docker-http.entrypoints=web"
+  #     - "traefik.http.routers.docker-http.rule=Host(`docker.localhost`)"
       
-      - "traefik.http.routers.docker-https.entrypoints=websecure"
-      - "traefik.http.routers.docker-http.service=docker-https"
-      - "traefik.http.routers.docker-https.rule=Host(`docker.localhost`)"
+  #     - "traefik.http.routers.docker-https.entrypoints=websecure"
+  #     - "traefik.http.routers.docker-http.service=docker-https"
+  #     - "traefik.http.routers.docker-https.rule=Host(`docker.localhost`)"
 
-      - "traefik.http.routers.docker-https.tls=true"
-      - "traefik.http.routers.docker-https.tls.options=default"
-      - "traefik.http.routers.docker-https.tls.certresolver=mycert"
+  #     - "traefik.http.routers.docker-https.tls=true"
+  #     - "traefik.http.routers.docker-https.tls.options=default"
+  #     - "traefik.http.routers.docker-https.tls.certresolver=mycert"
 
-      - "traefik.http.routers.docker-https.service=docker-https"
-      - "traefik.http.services.docker-https.loadbalancer.server.port=8082"
+  #     - "traefik.http.routers.docker-https.service=docker-https"
+  #     - "traefik.http.services.docker-https.loadbalancer.server.port=8082"
 
-      # Docker private 
-      - "traefik.http.routers.mirror-http.entrypoints=web"
-      - "traefik.http.routers.mirror-http.rule=Host(`private.localhost`)"
+  #     # Docker private 
+  #     - "traefik.http.routers.mirror-http.entrypoints=web"
+  #     - "traefik.http.routers.mirror-http.rule=Host(`private.localhost`)"
 
-      - "traefik.http.routers.mirror-https.entrypoints=websecure"
-      - "traefik.http.routers.mirror-http.service=mirror-https"
-      - "traefik.http.routers.mirror-https.rule=Host(`private.localhost`)"
+  #     - "traefik.http.routers.mirror-https.entrypoints=websecure"
+  #     - "traefik.http.routers.mirror-http.service=mirror-https"
+  #     - "traefik.http.routers.mirror-https.rule=Host(`private.localhost`)"
 
-      - "traefik.http.routers.mirror-https.tls=true"
-      - "traefik.http.routers.mirror-https.tls.options=default"
-      - "traefik.http.routers.mirror-https.tls.certresolver=mycert"
+  #     - "traefik.http.routers.mirror-https.tls=true"
+  #     - "traefik.http.routers.mirror-https.tls.options=default"
+  #     - "traefik.http.routers.mirror-https.tls.certresolver=mycert"
 
-      - "traefik.http.routers.mirror-https.service=mirror-https"
-      - "traefik.http.services.mirror-https.loadbalancer.server.port=8083"
+  #     - "traefik.http.routers.mirror-https.service=mirror-https"
+  #     - "traefik.http.services.mirror-https.loadbalancer.server.port=8083"
+
+
+
+
+
+
+
+
+      # - "traefik.http.routers.gitlab-http.entrypoints=web"
+      # - "traefik.http.routers.gitlab-http.rule=Host(`gitlab.localhost`)"
+      
+      # - "traefik.http.routers.gitlab-https.entrypoints=websecure"
+      # - "traefik.http.routers.gitlab-http.service=gitlab-https"
+      # - "traefik.http.routers.gitlab-https.rule=Host(`gitlab.localhost`)"
+
+      # - "traefik.http.routers.gitlab-https.tls=true"
+      # - "traefik.http.routers.gitlab-https.tls.options=default"
+      # - "traefik.http.routers.gitlab-https.tls.certresolver=mycert"
+
+      # - "traefik.http.routers.gitlab-https.service=gitlab-https"
+      # - "traefik.http.services.gitlab-https.loadbalancer.server.port=8084"
