@@ -15,6 +15,7 @@ services:
   traefik-service:
     image: traefik:v2.4.8
     container_name: traefik
+    restart: unless-stopped
     ports:
       - 80:80
       - 443:443
@@ -74,7 +75,7 @@ services:
 
   gitlab-service:
     image: 'gitlab/gitlab-ee:latest'
-    restart: always
+    restart: unless-stopped
     networks:
       - default
     # ports:
@@ -103,7 +104,7 @@ services:
   nexus-service:
     image: sonatype/nexus3:latest
     container_name: nexus
-    restart: always
+    restart: unless-stopped
     volumes:
       - nexus-vol:/sonatype-work
     networks:
