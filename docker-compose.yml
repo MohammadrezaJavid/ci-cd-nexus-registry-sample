@@ -92,10 +92,10 @@ services:
 
       - traefik.http.services.gitlab.loadbalancer.server.port=80
 
-      - traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)
-      - traefik.tcp.routers.gitlab-ssh.entrypoints=ssh
-      - traefik.tcp.routers.gitlab-ssh.service=gitlab-ssh-svc
-      - traefik.tcp.services.gitlab-ssh-svc.loadbalancer.server.port=22
+      # - traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)
+      # - traefik.tcp.routers.gitlab-ssh.entrypoints=ssh
+      # - traefik.tcp.routers.gitlab-ssh.service=gitlab-ssh-svc
+      # - traefik.tcp.services.gitlab-ssh-svc.loadbalancer.server.port=22
 
       # - "traefik.enable=true"
       # - "traefik.docker.network=dccn_net"
@@ -108,10 +108,10 @@ services:
       GITLAB_OMNIBUS_CONFIG: |
 
         # Server Configuration
-        external_url 'https://gitlab.example.com'
+        external_url 'http://gitlab.example.com'
         nginx['listen_https'] = false
         nginx['listen_port'] = 80
-        nginx['listen_port'] = 443
+        # nginx['listen_port'] = 443
         nginx['proxy_set_headers'] = {
           "X-Forwarded-Proto" => "https",
           "X-Forwarded-SSL" => "on"}
