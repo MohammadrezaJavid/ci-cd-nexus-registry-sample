@@ -20,13 +20,13 @@ note:
     - password: `password`
 
 ## Nexus
-### UI nexus, [registry.localhost](https://registry.localhost/)              ----> 8081
+. UI nexus, [registry.localhost](https://registry.localhost/)              ----> 8081
 
-### Docker proxy, [docker.localhost](https://docker.localhost/)              ----> 8082
+. Docker proxy, [docker.localhost](https://docker.localhost/)              ----> 8082
 
-### Docker private registry, [private.localhost](https://private.localhost/) ----> 8083
+. Docker private registry, [private.localhost](https://private.localhost/) ----> 8083
 
-### Docker public, [public.localhost](https://public.localhost/)             ----> 8084
+. Docker public, [public.localhost](https://public.localhost/)             ----> 8084
 #
 
 The general scenario of the repo is drawn in this file: ![general structure](./images/Untitled-2023-06-05-1238.png)
