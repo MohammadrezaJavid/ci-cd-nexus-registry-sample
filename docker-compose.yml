@@ -125,3 +125,18 @@ services:
 
       - "traefik.http.routers.mirror-https.service=mirror-https"
       - "traefik.http.services.mirror-https.loadbalancer.server.port=8083"
+
+      # Docker public
+      - "traefik.http.routers.public-http.entrypoints=web"
+      - "traefik.http.routers.public-http.rule=Host(`public.localhost`)"
+
+      - "traefik.http.routers.public-https.entrypoints=websecure"
+      - "traefik.http.routers.public-http.service=public-https"
+      - "traefik.http.routers.public-https.rule=Host(`public.localhost`)"
+
+      - "traefik.http.routers.public-https.tls=true"
+      - "traefik.http.routers.public-https.tls.options=default"
+      - "traefik.http.routers.public-https.tls.certresolver=mycert"
+
+      - "traefik.http.routers.public-https.service=public-https"
+      - "traefik.http.services.public-https.loadbalancer.server.port=8084"
