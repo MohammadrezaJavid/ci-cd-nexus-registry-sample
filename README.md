@@ -9,7 +9,7 @@ We implement two services, traefik and nexus, using containers.
 
 ## Traefik
 
-UI traefik, [traefik.localhost](https://traefik.localhost/) ----> port: 8080
+. UI traefik, [traefik.localhost](https://traefik.localhost/) ----> port: 8080
 
 note:
 
@@ -20,14 +20,17 @@ note:
     - password: `password`
 
 ## Nexus
-. UI nexus, [registry.localhost](https://registry.localhost/)              ----> 8081
+. UI nexus, [registry.localhost](https://registry.localhost/) ----> 8081
 
-. Docker proxy, [docker.localhost](https://docker.localhost/)              ----> 8082
+. Docker proxy, [docker.localhost](https://docker.localhost/) ----> 8082
 
 . Docker private registry, [private.localhost](https://private.localhost/) ----> 8083
 
-. Docker public, [public.localhost](https://public.localhost/)             ----> 8084
+. Docker public, [public.localhost](https://public.localhost/) ----> 8084
 #
+
+## GitLab
+. UI gitlab, [gitlab.example.com](http://gitlab.example.com/) ----> 88
 
 The general scenario of the repo is drawn in this file: ![general structure](./images/gitlab.png)
 
