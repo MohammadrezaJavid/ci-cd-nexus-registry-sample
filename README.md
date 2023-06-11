@@ -31,6 +31,7 @@ note:
 
 ## GitLab
 . UI gitlab, [gitlab.example.com](http://gitlab.example.com/) ----> 88
+#
 
 The general scenario of the repo is drawn in this file: ![general structure](./images/gitlab.png)
 
