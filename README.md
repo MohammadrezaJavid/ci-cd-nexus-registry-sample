@@ -31,9 +31,6 @@ note:
 
 The general scenario of the repo is drawn in this file: ![general structure](./images/Untitled-2023-06-05-1238.png)
 
-# Setup docker private registry
-
-TODO
 
 ## Contributing
 
