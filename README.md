@@ -21,8 +21,11 @@ note:
 
 ## Nexus
 ###UI nexus, [registry.localhost](https://registry.localhost/)              ----> 8081
+
 ###Docker proxy, [docker.localhost](https://docker.localhost/)              ----> 8082
+
 ###Docker private registry, [private.localhost](https://private.localhost/) ----> 8083
+
 ###Docker public, [public.localhost](https://public.localhost/)             ----> 8084
 #
 
