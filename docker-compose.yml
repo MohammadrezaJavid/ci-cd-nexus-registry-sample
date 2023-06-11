@@ -1,20 +1,14 @@
-version: '3.4'
-
-networks:
-  default:
-    name: dccn_net
-
-volumes:
-  traefik-acme:
-  nexus-vol:
+version: '3.9'
 
 services:
   traefik-service:
     image: traefik:v2.4.8
     container_name: traefik
+    restart: unless-stopped
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
+      - "22:22"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -37,6 +31,7 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=dccn_net"
 
+      - "--entrypoints.ssh.address=:22"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
 
@@ -69,12 +64,48 @@ services:
       
       - "traefik.http.services.traefik-https.loadbalancer.server.port=8080"
 
+  gitlab-service:
+    image: 'gitlab/gitlab-ee:latest'
+    restart: unless-stopped
+    container_name: gitlab
+    networks:
+      - default
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+    shm_size: 512m
+    mem_limit: 5g
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dccn_net"
+
+      - "traefik.http.routers.gitlab-http.entrypoints=web"
+      - "traefik.http.routers.gitlab-http.rule=Host(`gitlab.example.com`)"
+
+      - "traefik.http.routers.gitlab-http.service=gitlab-http"
+      - "traefik.http.services.gitlab-http.loadbalancer.server.port=80"
+
+      - "traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.gitlab-ssh.entrypoints=ssh"
+      - "traefik.tcp.routers.gitlab-ssh.service=gitlab-ssh-svc"
+      - "traefik.tcp.services.gitlab-ssh-svc.loadbalancer.server.port=22"
+
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+
+        # Server Configuration
+        external_url 'http://gitlab.example.com'
+        nginx['listen_https'] = false
+        nginx['listen_port'] = 80
+        gitlab_rails['gitlab_shell_ssh_port'] = 22
+
   nexus-service:
     image: sonatype/nexus3:latest
     container_name: nexus
-    restart: always
+    restart: unless-stopped
     volumes:
-      - nexus-vol:/sonatype-work
+      - nexus_data:/nexus-data
     networks:
       - default
     labels:
@@ -96,7 +127,7 @@ services:
       - "traefik.http.routers.nexus-https.service=nexus-https"
       - "traefik.http.services.nexus-https.loadbalancer.server.port=8081"
 
-      # Docker hub proxy
+      # Docker proxy
       - "traefik.http.routers.docker-http.entrypoints=web"
       - "traefik.http.routers.docker-http.rule=Host(`docker.localhost`)"
       
@@ -112,19 +143,24 @@ services:
       - "traefik.http.services.docker-https.loadbalancer.server.port=8082"
 
       # Docker private 
-      - "traefik.http.routers.mirror-http.entrypoints=web"
-      - "traefik.http.routers.mirror-http.rule=Host(`private.localhost`)"
+      - "traefik.http.routers.private-http.entrypoints=web"
+      - "traefik.http.routers.private-http.rule=Host(`private.localhost`)"
 
-      - "traefik.http.routers.mirror-https.entrypoints=websecure"
-      - "traefik.http.routers.mirror-http.service=mirror-https"
-      - "traefik.http.routers.mirror-https.rule=Host(`private.localhost`)"
+      - "traefik.http.routers.private-https.entrypoints=websecure"
+      - "traefik.http.routers.private-http.service=private-https"
+      - "traefik.http.routers.private-https.rule=Host(`private.localhost`)"
 
-      - "traefik.http.routers.mirror-https.tls=true"
-      - "traefik.http.routers.mirror-https.tls.options=default"
-      - "traefik.http.routers.mirror-https.tls.certresolver=mycert"
+      - "traefik.http.routers.private-https.tls=true"
+      - "traefik.http.routers.private-https.tls.options=default"
+      - "traefik.http.routers.private-https.tls.certresolver=mycert"
 
+<<<<<<< HEAD
       - "traefik.http.routers.mirror-https.service=mirror-https"
       - "traefik.http.services.mirror-https.loadbalancer.server.port=8083"
+=======
+      - "traefik.http.routers.private-https.service=private-https"
+      - "traefik.http.services.private-https.loadbalancer.server.port=8083"
+>>>>>>> feature/add_gitlab
 
       # Docker public
       - "traefik.http.routers.public-http.entrypoints=web"
@@ -140,3 +176,17 @@ services:
 
       - "traefik.http.routers.public-https.service=public-https"
       - "traefik.http.services.public-https.loadbalancer.server.port=8084"
+<<<<<<< HEAD
+=======
+
+volumes:
+  traefik-acme:
+  nexus_data:
+  gitlab-config:
+  gitlab-data:
+  gitlab-logs:
+
+networks:
+  default:
+    name: dccn_net
+>>>>>>> feature/add_gitlab

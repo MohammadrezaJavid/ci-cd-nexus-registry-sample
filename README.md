@@ -29,7 +29,11 @@ note:
 . Docker public, [public.localhost](https://public.localhost/)             ----> 8084
 #
 
+<<<<<<< HEAD
 The general scenario of the repo is drawn in this file: ![general structure](./images/Untitled-2023-06-05-1238.png)
+=======
+The general scenario of the repo is drawn in this file: ![general structure](./images/gitlab.jpg)
+>>>>>>> feature/add_gitlab
 
 
 ## Contributing
