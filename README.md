@@ -27,9 +27,9 @@ note:
 . Docker private registry, [private.localhost](https://private.localhost/) ----> 8083
 
 . Docker public, [public.localhost](https://public.localhost/)             ----> 8084
+#
 
-
-The general scenario of the repo is drawn in this file: ![general structure](./images/gitlab.jpg)
+The general scenario of the repo is drawn in this file: ![general structure](./images/gitlab.png)
 
 
 ## Contributing
