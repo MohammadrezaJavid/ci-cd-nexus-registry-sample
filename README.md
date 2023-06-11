@@ -29,7 +29,7 @@ Docker private registry, [private.localhost](https://private.localhost/) ----> 8
 
 #
 
-The general scenario of the repo is drawn in this file: ![general structure](./images/structe.jpg)
+The general scenario of the repo is drawn in this file: ![general structure](./images/Untitled-2023-06-05-1238.png)
 
 # Setup docker private registry
 
